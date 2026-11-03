@@ -17,17 +17,17 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Préparation du projet...'
-                sh 'ls -la'
-                sh 'test -f index.html'
-                sh 'test -f style.css'
+                bat 'ls -la'
+                bat 'test -f index.html'
+                bat 'test -f style.css'
             }
         }
 
         stage('Test') {
             steps {
                 echo 'Vérification des fichiers...'
-                sh 'test -s index.html'
-                sh 'test -s style.css'
+                bat 'test -s index.html'
+                bat 'test -s style.css'
                 echo 'Tous les fichiers sont présents.'
             }
         }
