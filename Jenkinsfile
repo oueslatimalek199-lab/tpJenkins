@@ -1,39 +1,51 @@
 pipeline {
     agent any
-    options { timestamps() }
+
+    options {
+        timestamps()
+    }
+
     stages {
-        stage('Cloner le depot') {
+
+        stage('Checkout') {
             steps {
-                git url: 'https://github.com/oueslatimalek199-lab/tpJenkins.git', branch: 'main'
+                echo 'Récupération du code source...'
+                checkout scm
             }
         }
-        stage('Etape 1 : Verification du depot') {
+
+        stage('Build') {
             steps {
-                bat 'echo === Etape 1 : Verification du depot ==='
-                bat 'git status'
+                echo 'Préparation du projet...'
+                sh 'ls -la'
+                sh 'test -f index.html'
+                sh 'test -f style.css'
             }
         }
-        stage('Etape 2 : Afficher le contenu du projet') {
+
+        stage('Test') {
             steps {
-                bat 'echo === Etape 2 : Afficher le contenu du projet ==='
-                bat 'dir'
+                echo 'Vérification des fichiers...'
+                sh 'test -s index.html'
+                sh 'test -s style.css'
+                echo 'Tous les fichiers sont présents.'
             }
         }
-        stage('Etape 3 : Simuler un deploiement local') {
+
+        stage('Deploy') {
             steps {
-                bat 'echo === Etape 3 : Simuler un deploiement local ==='
-                bat 'echo Le fichier index.html est pret a etre affiche'
-            }
-        }
-        stage('Etape 4 : Fin du build') {
-            steps {
-                bat 'echo === Etape 4 : Fin du build ==='
-                bat 'echo SUCCESS'
+                echo 'Simulation du déploiement...'
+                echo 'Le projet est prêt à être déployé.'
             }
         }
     }
+
     post {
-        success { echo 'Build OK' }
-        failure { echo 'Build KO' }
+        success {
+            echo 'Build OK'
+        }
+        failure {
+            echo 'Build KO'
+        }
     }
 }
