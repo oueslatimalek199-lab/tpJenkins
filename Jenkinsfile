@@ -18,7 +18,7 @@ pipeline {
             steps {
                 echo 'Préparation du projet...'
                 bat 'dir'
-                bat 'test -f index.html'
+                bat 'if exist fichier.html (echo Fichier fichier.html existe) else (echo Fichier fichier.html introuvable & exit /b 1)'
                 bat 'test -f style.css'
             }
         }
