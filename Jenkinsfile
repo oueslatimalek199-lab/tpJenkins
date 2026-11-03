@@ -3,6 +3,7 @@ pipeline {
     agent any
 
     stages {
+
         stage('Checkout') {
     steps {
         echo 'Recuperation du projet GitHub'
@@ -11,6 +12,8 @@ pipeline {
     }
 }
 
+
+ ea5ed08 (Fix Jenkins Git URL)
         stage('Build') {
             steps {
                 echo 'Verification des fichiers du projet'
@@ -45,9 +48,11 @@ pipeline {
         success {
             echo 'Pipeline execute avec succes !'
         }
+
         failure {
             echo 'Le pipeline a echoue.'
         }
     }
 }
+
 
