@@ -17,7 +17,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Préparation du projet...'
-                bat 'ls -la'
+                bat 'dir'
                 bat 'test -f index.html'
                 bat 'test -f style.css'
             }
