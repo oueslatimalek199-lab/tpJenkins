@@ -26,7 +26,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Vérification des fichiers...'
-                bat 'test -s fichier.html'
+                bat 'if exist fichier.html (echo Fichier fichier.html existe) else (echo Fichier fichier.html introuvable & exit /b 1)'
                 bat 'test -s fichier.css'
                 echo 'Tous les fichiers sont présents.'
             }
