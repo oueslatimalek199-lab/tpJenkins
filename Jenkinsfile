@@ -26,8 +26,8 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Vérification des fichiers...'
-                bat 'test -s index.html'
-                bat 'test -s style.css'
+                bat 'test -s fichier.html'
+                bat 'test -s fichier.css'
                 echo 'Tous les fichiers sont présents.'
             }
         }
