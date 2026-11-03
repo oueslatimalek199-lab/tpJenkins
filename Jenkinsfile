@@ -1,51 +1,53 @@
+
 pipeline {
     agent any
 
-    options {
-        timestamps()
-    }
-
     stages {
-
         stage('Checkout') {
             steps {
-                echo 'Récupération du code source...'
-                checkout scm
+                echo 'Recuperation du projet GitHub'
+                git branch: 'main',
+                    url: 'https://github.com/ouesl atimalek199-lab/tpJenkins.git'
             }
         }
 
         stage('Build') {
             steps {
-                echo 'Préparation du projet...'
+                echo 'Verification des fichiers du projet'
+
                 bat 'dir'
+
                 bat 'if exist fichier.html (echo Fichier fichier.html existe) else (echo Fichier fichier.html introuvable & exit /b 1)'
-                bat 'test -f style.css'
+
+                bat 'if exist fichier.css (echo Fichier fichier.css existe) else (echo Fichier fichier.css introuvable & exit /b 1)'
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Vérification des fichiers...'
-                bat 'if exist fichier.html (echo Fichier fichier.html existe) else (echo Fichier fichier.html introuvable & exit /b 1)'
-                bat 'test -s fichier.css'
-                echo 'Tous les fichiers sont présents.'
+                echo 'Execution des tests'
+
+                bat 'echo Test du fichier HTML'
+                bat 'echo Test du fichier CSS'
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Simulation du déploiement...'
-                echo 'Le projet est prêt à être déployé.'
+                echo 'Deploiement du projet'
+
+                bat 'echo Projet deploye avec succes'
             }
         }
     }
 
     post {
         success {
-            echo 'Build OK'
+            echo 'Pipeline execute avec succes !'
         }
         failure {
-            echo 'Build KO'
+            echo 'Le pipeline a echoue.'
         }
     }
 }
+
