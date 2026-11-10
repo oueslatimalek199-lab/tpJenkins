@@ -4,12 +4,12 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                echo 'Recuperation du projet GitHub'
-                git branch: 'main',
-                    url: 'https://github.com/ouesl atimalek199-lab/tpJenkins.git'
-            }
-        }
+    steps {
+        echo 'Recuperation du projet GitHub'
+        git url: 'https://github.com/oueslatimalek199-lab/tpJenkins.git',
+            branch: 'main'
+    }
+}
 
         stage('Build') {
             steps {
