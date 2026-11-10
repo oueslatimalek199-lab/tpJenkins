@@ -13,7 +13,6 @@ pipeline {
 }
 
 
- ea5ed08 (Fix Jenkins Git URL)
         stage('Build') {
             steps {
                 echo 'Verification des fichiers du projet'
