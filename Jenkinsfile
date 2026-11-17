@@ -55,18 +55,18 @@ stage('Docker Login Test') {
         withCredentials([
             usernamePassword(
                 credentialsId: 'dockerhub-creds',
-                usernameVariable: 'USER',
-                passwordVariable: 'PASS'
+                usernameVariable: 'DOCKER_USER',
+                passwordVariable: 'DOCKER_PASS'
             )
         ]) {
             bat '''
-            echo %PASS% | docker login -u %USER% --password-stdin
-            if errorlevel 1 exit /b 1
+                powershell -NoProfile -NonInteractive -Command "$env:DOCKER_PASS | docker login --username $env:DOCKER_USER --password-stdin"
+
+                if errorlevel 1 exit /b 1
             '''
         }
     }
 }
-
 
         stage('Push (Docker Hub)') {
             steps {
