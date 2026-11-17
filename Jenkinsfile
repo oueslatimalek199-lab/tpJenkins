@@ -2,56 +2,84 @@
 pipeline {
     agent any
 
+    options {
+        timestamps()
+    }
+
+    environment {
+        IMAGE = 'malekoueslati/monapp'
+        TAG = "build-${env.BUILD_NUMBER}"
+    }
+
     stages {
 
         stage('Checkout') {
-    steps {
-        echo 'Recuperation du projet GitHub'
-        git url: 'https://github.com/oueslatimalek199-lab/tpJenkins.git',
-            branch: 'main'
-    }
-}
-
-
-        stage('Build') {
             steps {
-                echo 'Verification des fichiers du projet'
-
-                bat 'dir'
-
-                bat 'if exist fichier.html (echo Fichier fichier.html existe) else (echo Fichier fichier.html introuvable & exit /b 1)'
-
-                bat 'if exist fichier.css (echo Fichier fichier.css existe) else (echo Fichier fichier.css introuvable & exit /b 1)'
+                checkout scm
             }
         }
 
-        stage('Test') {
+        stage('Docker Build') {
             steps {
-                echo 'Execution des tests'
-
-                bat 'echo Test du fichier HTML'
-                bat 'echo Test du fichier CSS'
+                bat 'docker version'
+                bat 'docker build -t %IMAGE%:%TAG% .'
             }
         }
 
-        stage('Deploy') {
+        stage('Smoke Test') {
             steps {
-                echo 'Deploiement du projet'
+                bat '''
+                    docker rm -f monapp_test 2>nul || ver > nul
 
-                bat 'echo Projet deploye avec succes'
+                    docker run -d --name monapp_test -p 8081:80 %IMAGE%:%TAG%
+
+                    ping -n 3 127.0.0.1 > nul
+
+                    curl -I http://localhost:8081 | findstr /C:"200 OK"
+
+                    if errorlevel 1 (
+                        docker logs monapp_test
+                        docker rm -f monapp_test
+                        exit /b 1
+                    )
+
+                    docker rm -f monapp_test
+                '''
+            }
+        }
+
+        stage('Push (Docker Hub)') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    bat '''
+                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+
+                        docker tag %IMAGE%:%TAG% %IMAGE%:latest
+
+                        docker push %IMAGE%:%TAG%
+
+                        docker push %IMAGE%:latest
+
+                        docker logout
+                    '''
+                }
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline execute avec succes !'
+            echo 'Build + Test + Push OK'
         }
 
         failure {
-            echo 'Le pipeline a echoue.'
+            echo 'Build / Tests / Push KO'
         }
     }
 }
-
-
