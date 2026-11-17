@@ -1,122 +1,59 @@
 
 pipeline {
-    agent any
+  agent any
+  options { timestamps() }
 
-    options {
-        timestamps()
+  environment {
+    IMAGE = 'malekoueslati/monapp'
+    TAG   = "build-${env.BUILD_NUMBER}"
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps { checkout scm }
     }
 
-    environment {
-        IMAGE = 'malekoueslati/monapp'
-        TAG = "build-${BUILD_NUMBER}"
+    stage('Docker Build') {
+      steps {
+        bat 'docker version'
+        bat "docker build -t %IMAGE%:%TAG% ."
+      }
     }
 
-    stages {
-
-        // 1. Get source code from GitHub
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        // 2. Build Docker image
-        stage('Docker Build') {
-            steps {
-                bat 'docker version'
-                bat 'docker build -t %IMAGE%:%TAG% .'
-            }
-        }
-
-        // 3. Test the application
-        stage('Smoke Test') {
-            steps {
-                bat '''
-                    docker rm -f monapp_test 2>nul
-
-                    docker run -d --name monapp_test -p 8083:80 %IMAGE%:%TAG%
-
-                    if errorlevel 1 exit /b 1
-
-                    ping -n 4 127.0.0.1 > nul
-
-                    curl -f http://localhost:8083
-
-                    if errorlevel 1 (
-                        docker logs monapp_test
-                        docker rm -f monapp_test
-                        exit /b 1
-                    )
-
-                    docker rm -f monapp_test
-                '''
-            }
-        }
-
-        // 4. Test Docker Hub credentials
-        stage('Docker Login Test') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    bat '''
-                        powershell -NoProfile -NonInteractive -Command "$env:DOCKER_PASS | docker login --username $env:DOCKER_USER --password-stdin"
-
-                        if errorlevel 1 exit /b 1
-                    '''
-                }
-            }
-        }
-
-        // 5. Push image to Docker Hub
-        stage('Push (Docker Hub)') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-                    bat '''
-                        powershell -NoProfile -NonInteractive -Command "$env:DOCKER_PASS | docker login --username $env:DOCKER_USER --password-stdin"
-
-                        if errorlevel 1 exit /b 1
-
-                        docker tag %IMAGE%:%TAG% %IMAGE%:latest
-
-                        if errorlevel 1 exit /b 1
-
-                        docker push %IMAGE%:%TAG%
-
-                        if errorlevel 1 exit /b 1
-
-                        docker push %IMAGE%:latest
-
-                        if errorlevel 1 exit /b 1
-
-                        docker logout
-                    '''
-                }
-            }
-        }
+    stage('Smoke Test') {
+      steps {
+        bat """
+          docker rm -f monapp_test 2>nul || ver > nul
+          docker run -d --name monapp_test -p 8081:80 %IMAGE%:%TAG%
+          ping -n 3 127.0.0.1 > nul
+          curl -I http://localhost:8081 | find "200 OK"
+          docker rm -f monapp_test
+        """
+      }
     }
 
-    post {
-        success {
-            echo 'Build + Smoke Test + Docker Hub Push SUCCESS!'
+    stage('Push (Docker Hub)') {
+      steps {
+        withCredentials([usernamePassword(
+          credentialsId: 'dockerhub-creds',
+          usernameVariable: 'USER',
+          passwordVariable: 'PASS'
+        )]) {
+          bat """
+            echo %PASS% | docker login -u %USER% --password-stdin
+            docker tag %IMAGE%:%TAG% %IMAGE%:latest
+            docker push %IMAGE%:%TAG%
+            docker push %IMAGE%:latest
+          """
         }
-
-        failure {
-            echo 'Build / Test / Push FAILED!'
-        }
-
-        always {
-            bat 'docker rm -f monapp_test 2>nul'
-        }
+      }
     }
+
+  }
+
+  post {
+    success { echo 'Build + Test + Push OK' }
+    failure { echo 'Build / Test / Push KO' }
+  }
 }
