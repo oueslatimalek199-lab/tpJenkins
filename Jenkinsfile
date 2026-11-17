@@ -1,20 +1,25 @@
 pipeline {
   agent any
   options { timestamps() }
+
   environment {
     IMAGE = 'malekoueslati/monapp'
     TAG   = "build-${env.BUILD_NUMBER}"
   }
+
   stages {
+
     stage('Checkout') {
       steps { checkout scm }
     }
+
     stage('Docker Build') {
       steps {
         bat 'docker version'
         bat "docker build -t %IMAGE%:%TAG% ."
       }
     }
+
     stage('Smoke Test') {
       steps {
         bat """
@@ -26,6 +31,7 @@ pipeline {
         """
       }
     }
+
     stage('Push (Docker Hub)') {
       steps {
         withCredentials([usernamePassword(
@@ -39,3 +45,16 @@ pipeline {
             docker tag %IMAGE%:%TAG% %IMAGE%:latest
             docker push %IMAGE%:%TAG%
             docker push %IMAGE%:latest
+            docker logout
+          """
+        }
+      }
+    }
+
+  }
+
+  post {
+    success { echo 'Build + Test + Push OK' }
+    failure { echo 'Build / Test / Push KO' }
+  }
+}
