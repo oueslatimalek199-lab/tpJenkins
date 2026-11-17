@@ -34,23 +34,24 @@ pipeline {
 }
 
     stage('Push (Docker Hub)') {
-      steps {
-        withCredentials([usernamePassword(
-          credentialsId: 'dockerhub-creds',
-          usernameVariable: 'USER',
-          passwordVariable: 'PASS'
-        )]) {
-          bat """
-            echo %PASS% | docker login -u %USER% --password-stdin
-            docker tag %IMAGE%:%TAG% %IMAGE%:latest
-            docker push %IMAGE%:%TAG%
-            docker push %IMAGE%:latest
-          """
-        }
-      }
+  steps {
+    withCredentials([usernamePassword(
+      credentialsId: 'dockerhub-creds',
+      usernameVariable: 'USER',
+      passwordVariable: 'PASS'
+    )]) {
+      bat """
+        docker logout
+        docker login -u %USER% -p %PASS%
+        docker tag %IMAGE%:%TAG% %IMAGE%:latest
+        docker push %IMAGE%:%TAG%
+        docker push %IMAGE%:latest
+        docker logout
+      """
     }
-
   }
+}
+
 
   post {
     success { echo 'Build + Test + Push OK' }
