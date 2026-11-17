@@ -50,6 +50,22 @@ stage('Smoke Test') {
         '''
     }
 }
+stage('Docker Login Test') {
+    steps {
+        withCredentials([
+            usernamePassword(
+                credentialsId: 'dockerhub-creds',
+                usernameVariable: 'USER',
+                passwordVariable: 'PASS'
+            )
+        ]) {
+            bat '''
+            echo %PASS% | docker login -u %USER% --password-stdin
+            if errorlevel 1 exit /b 1
+            '''
+        }
+    }
+}
 
 
         stage('Push (Docker Hub)') {
