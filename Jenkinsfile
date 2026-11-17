@@ -26,27 +26,31 @@ pipeline {
             }
         }
 
-        stage('Smoke Test') {
-            steps {
-                bat '''
-                    docker rm -f monapp_test 2>nul || ver > nul
+        
+stage('Smoke Test') {
+    steps {
+        bat '''
+            docker rm -f monapp_test 2>nul || ver > nul
 
-                    docker run -d --name monapp_test -p 8081:80 %IMAGE%:%TAG%
+            docker run -d --name monapp_test -p 8083:80 %IMAGE%:%TAG%
 
-                    ping -n 3 127.0.0.1 > nul
+            if errorlevel 1 exit /b 1
 
-                    curl -I http://localhost:8081 | findstr /C:"200 OK"
+            ping -n 3 127.0.0.1 > nul
 
-                    if errorlevel 1 (
-                        docker logs monapp_test
-                        docker rm -f monapp_test
-                        exit /b 1
-                    )
+            curl -I http://localhost:8083 | findstr /C:"200 OK"
 
-                    docker rm -f monapp_test
-                '''
-            }
-        }
+            if errorlevel 1 (
+                docker logs monapp_test
+                docker rm -f monapp_test
+                exit /b 1
+            )
+
+            docker rm -f monapp_test
+        '''
+    }
+}
+
 
         stage('Push (Docker Hub)') {
             steps {
